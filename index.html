@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+    <h1>Chat</h1>
+    <h3>The first input will be considered as your nickname</h3>
+    <h3 id="greetings"></h3>
+    <div id="chat"></div>
+    <input id="msg" type="text">
+    <style>
+        input {
+            border: 1px solid green;
+        }
+    </style>
+    <script>
+
+        const CHAR_RETURN = 13;
+
+        const socket = new WebSocket('ws://127.0.0.1:5000/chat');
+        const chat = document.getElementById('chat');
+        const msg = document.getElementById('msg');
+        const grt = document.getElementById('greetings');
+        const user = {
+            nickname: '',
+            lastMsg: '',
+            messages: []
+        }
+        msg.focus();
+        const writeLine = ({nickname, lastMsg}) => {
+            const line = document.createElement('div');
+            line.innerHTML = `<p>${nickname}:    ${lastMsg}</p>`;
+            chat.appendChild(line);
+        };
+
+        socket.onopen = () => {
+            // writeLine('connected');
+        };
+
+        socket.onclose = () => {
+            // writeLine('closed');
+        };
+
+        socket.onmessage = ({data}) => {
+            const user = JSON.parse(data);
+            writeLine(user);
+        };
+
+        msg.addEventListener('keydown', event => {
+            if (event.keyCode === CHAR_RETURN) {
+                if (user.nickname === '') {
+                    user.nickname = msg.value;
+                    msg.value = '';
+                    grt.innerText = `Hello ${user.nickname}`;
+                    return;
+                }
+                user.messages.push(msg.value);
+                user.lastMsg = msg.value;
+                msg.value = '';
+                writeLine(user);
+                socket.send(JSON.stringify(user));
+            }
+        });
+
+    </script>
+</body>
+
+</html>
